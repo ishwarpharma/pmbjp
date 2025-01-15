@@ -80,6 +80,10 @@
             color: white;
         }
 
+        table tr:hover {
+            background-color: #f1f1f1;
+        }
+
         .highlight {
             background-color: yellow;
         }
@@ -92,25 +96,30 @@
         .checkbox-container label {
             margin-left: 5px;
         }
+
+        .checkbox-container input {
+            margin-right: 5px;
+        }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
         let data = [];
 
-async function loadData() {
-    try {
-        const response = await fetch('pmbjp.xlsx');
-        const arrayBuffer = await response.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        data = XLSX.utils.sheet_to_json(worksheet, { defval: '' }); // Ensures no undefined values
-        console.log('Loaded data:', data); // Debugging line
-        document.getElementById('data-counter').innerText = `Total Items: ${data.length}`;
-        searchItems();
-    } catch (error) {
-        console.error('Error loading data:', error);
-    }
-}
+        async function loadData() {
+            try {
+                const response = await fetch('pmbjp.xlsx');
+                const arrayBuffer = await response.arrayBuffer();
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                data = XLSX.utils.sheet_to_json(worksheet, { defval: '' }); // Ensures no undefined values
+                console.log('Loaded data:', data); // Debugging line
+                document.getElementById('data-counter').innerText = `Total Items: ${data.length}`;
+                searchItems();
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
 
         function searchItems() {
             const searchValue = document.getElementById("search-bar").value.toLowerCase().trim();
@@ -128,16 +137,19 @@ async function loadData() {
             });
 
             resultsTable.innerHTML = filteredData.map(item => {
-                const drugCode = item["Drug Code"]?.toString().trim() || 'N/A';
+                const drugCode = (item["Drug Code"] || '').trim();
                 const mrp = formatMRP(item["MRP (in Rs.)"]);
+                const unitSize = item["Unit Size"] || 'N/A';
+                const genericName = (item["Generic Name"] || '').trim();
+
                 return `
                     <tr>
                         <td>${drugCode}</td>
-                        <td>${highlightMatches(item["Generic Name"] || '', searchTerms)}</td>
-                        <td>${item["Unit Size"] || ''}</td>
+                        <td>${highlightMatches(genericName, searchTerms)}</td>
+                        <td>${unitSize}</td>
                         <td>${mrp}</td>
                         <td class="checkbox-container">
-                            <input type="checkbox" id="copy-${drugCode}" onclick="copyToMemory('${item["Generic Name"] || ''}')">
+                            <input type="checkbox" id="copy-${drugCode}" onclick="copyToMemory('${genericName}')">
                             <label for="copy-${drugCode}">Save</label>
                         </td>
                     </tr>
@@ -151,13 +163,10 @@ async function loadData() {
         }
 
         function formatMRP(mrpValue) {
-            if (typeof mrpValue === 'number') {
-                return mrpValue.toFixed(2);
-            } else if (!isNaN(parseFloat(mrpValue))) {
-                return parseFloat(mrpValue).toFixed(2);
-            } else {
-                return mrpValue || 'N/A';
-            }
+            if (!mrpValue) return 'N/A';
+            const parsedMRP = parseFloat(mrpValue);
+            if (isNaN(parsedMRP)) return 'N/A';
+            return parsedMRP.toFixed(2);
         }
 
         function resetSearch() {
@@ -173,7 +182,6 @@ async function loadData() {
 
         document.addEventListener('DOMContentLoaded', loadData);
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
     <header>📋 PMBJP Item Master <span id="data-counter">Total Items: 0</span></header>

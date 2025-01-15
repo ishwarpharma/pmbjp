@@ -112,16 +112,19 @@
                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
-                data = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+                data = XLSX.utils.sheet_to_json(worksheet, { defval: '' }); // Ensures no undefined values
 
-                console.log('Loaded data:', data);
-                console.log('Column headers:', Object.keys(data[0]));
+                // Log the column headers to verify if they are correct
+                console.log('Loaded data:', data); // Debugging line
+                console.log('Column headers:', Object.keys(data[0])); // Log headers of first item
 
+                // Sanitize and trim column names to ensure no extra spaces
                 data = data.map(item => {
                     const sanitizedItem = {};
                     Object.keys(item).forEach(key => {
+                        // Remove leading/trailing spaces from the key name
                         const sanitizedKey = key.trim();
-                        sanitizedItem[sanitizedKey] = item[key];
+                        sanitizedItem[sanitizedKey] = item[key]; // Trim all keys and assign the values
                     });
                     return sanitizedItem;
                 });
@@ -149,20 +152,20 @@
             });
 
             resultsTable.innerHTML = filteredData.map(item => {
-                const drugCode = (item["Drug Code"] || '').trim();
-                const mrp = formatMRP(item["MRP (in Rs.)"]);
+                const drug = (item["Drug"] || '').trim();  // Accessing new column "Drug"
+                const mrp = formatMRP(item["MRP"]);  // Accessing new column "MRP"
                 const unitSize = item["Unit Size"] || 'N/A';
                 const genericName = (item["Generic Name"] || '').trim();
 
                 return `
                     <tr>
-                        <td>${drugCode}</td>
+                        <td>${drug}</td>
                         <td>${highlightMatches(genericName, searchTerms)}</td>
                         <td>${unitSize}</td>
                         <td>${mrp}</td>
                         <td class="checkbox-container">
-                            <input type="checkbox" id="copy-${drugCode}" onclick="copyToMemory('${genericName}')">
-                            <label for="copy-${drugCode}">Save</label>
+                            <input type="checkbox" id="copy-${drug}" onclick="copyToMemory('${genericName}')">
+                            <label for="copy-${drug}">Save</label>
                         </td>
                     </tr>
                 `;
@@ -205,10 +208,10 @@
         <table>
             <thead>
                 <tr>
-                    <th>Drug Code</th>
+                    <th>Drug</th>
                     <th>Generic Name</th>
                     <th>Unit Size</th>
-                    <th>MRP (in Rs.)</th>
+                    <th>MRP</th>
                     <th>Action</th>
                 </tr>
             </thead>

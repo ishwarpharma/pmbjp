@@ -111,21 +111,19 @@
 
             const searchTerms = searchValue.split(" ");
             const filteredData = data.filter(item => {
-                const itemString = `${item.DrugCode || ''} ${item.GenericName || ''}`.toLowerCase();
-                return searchTerms.every(term => itemString.includes(term));
+                const genericName = (item["Generic Name"] || '').toLowerCase();
+                return searchTerms.every(term => genericName.includes(term));
             });
-
-            filteredData.sort((a, b) => b.GenericName.toLowerCase().includes(searchValue) - a.GenericName.toLowerCase().includes(searchValue));
 
             resultsTable.innerHTML = filteredData.map(item => `
                 <tr>
-                    <td>${item.DrugCode || ''}</td>
-                    <td class="highlight">${highlightMatches(item.GenericName || '', searchTerms)}</td>
-                    <td>${item.UnitSize || ''}</td>
-                    <td>${item.MRP || ''}</td>
+                    <td>${item["Drug Code"] || ''}</td>
+                    <td>${highlightMatches(item["Generic Name"] || '', searchTerms)}</td>
+                    <td>${item["Unit Size"] || ''}</td>
+                    <td>${item["MRP (in Rs.)"] || ''}</td>
                     <td class="checkbox-container">
-                        <input type="checkbox" id="copy-${item.DrugCode}" onclick="copyToMemory('${item.GenericName || ''}')">
-                        <label for="copy-${item.DrugCode}">Save</label>
+                        <input type="checkbox" id="copy-${item["Drug Code"]}" onclick="copyToMemory('${item["Generic Name"] || ''}')">
+                        <label for="copy-${item["Drug Code"]}">Save</label>
                     </td>
                 </tr>
             `).join("");

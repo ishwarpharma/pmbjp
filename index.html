@@ -72,7 +72,7 @@
         table th, table td {
             border: 1px solid #ddd;
             padding: 8px;
-            text-align: center;
+            text-align: left;
         }
 
         table th {
@@ -80,31 +80,32 @@
             color: white;
         }
 
-        table tr:hover {
-            background-color: #f1f1f1;
-        }
-
         .highlight {
             background-color: yellow;
         }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox-container label {
+            margin-left: 5px;
+        }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
         let data = [];
 
         async function loadData() {
             try {
-                // Replace with your actual path to the file
-                const response = await fetch('pmbjp.xlsx'); // This file must be accessible
+                const response = await fetch('pmbjp.xlsx');
                 const arrayBuffer = await response.arrayBuffer();
                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
-                data = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-
-                console.log('Loaded Data:', data); // Debugging: Check if data is loaded correctly
+                data = XLSX.utils.sheet_to_json(worksheet, { defval: '' }); // Ensures no undefined values
                 document.getElementById('data-counter').innerText = `Total Items: ${data.length}`;
-                searchItems(); // Initial search to display all records
+                searchItems();
             } catch (error) {
                 console.error('Error loading data:', error);
             }
@@ -114,52 +115,48 @@
             const searchValue = document.getElementById("search-bar").value.toLowerCase().trim();
             const resultsTable = document.getElementById("results-body");
 
-            // Only proceed if search value is 3 or more characters
             if (searchValue.length < 3) {
                 resultsTable.innerHTML = "";
                 return;
             }
 
-            console.log('Search Term:', searchValue); // Debugging: Log the search term
-
             const searchTerms = searchValue.split(" ");
             const filteredData = data.filter(item => {
-                const drug = (item["Drug"] || '').toLowerCase();
                 const genericName = (item["Generic Name"] || '').toLowerCase();
-                
-                // Check if all search terms exist in either the Drug or Generic Name columns
-                return searchTerms.every(term => 
-                    drug.includes(term) || genericName.includes(term)
-                );
+                return searchTerms.every(term => genericName.includes(term));
             });
 
-            console.log('Filtered Data:', filteredData); // Debugging: Check filtered data
-
             resultsTable.innerHTML = filteredData.map(item => {
-                const drug = item["Drug"] || 'N/A';
-                const mrp = item["MRP"] || 'N/A';
-                const unitSize = item["Unit Size"] || 'N/A';
-                const genericName = item["Generic Name"] || 'N/A';
-
+                const drugCode = item["Drug"]?.toString().trim() || 'N/A';
+                const mrp = formatMRP(item["MRP"]);
                 return `
                     <tr>
-                        <td>${highlightMatches(drug, searchTerms)}</td>
-                        <td>${highlightMatches(genericName, searchTerms)}</td>
-                        <td>${unitSize}</td>
+                        <td>${drugCode}</td>
+                        <td>${highlightMatches(item["Generic Name"] || '', searchTerms)}</td>
+                        <td>${item["Unit Size"] || ''}</td>
                         <td>${mrp}</td>
+                        <td class="checkbox-container">
+                            <input type="checkbox" id="copy-${drugCode}" onclick="copyToMemory('${item["Generic Name"] || ''}')">
+                            <label for="copy-${drugCode}">Save</label>
+                        </td>
                     </tr>
                 `;
             }).join("");
         }
 
         function highlightMatches(text, terms) {
-            if (!text) return text;
-            let highlightedText = text;
-            terms.forEach(term => {
-                const regex = new RegExp(`(${term})`, "gi");
-                highlightedText = highlightedText.replace(regex, "<span class='highlight'>$1</span>");
-            });
-            return highlightedText;
+            const regex = new RegExp(`(${terms.join("|")})`, "gi");
+            return text.replace(regex, match => `<span class='highlight'>${match}</span>`);
+        }
+
+        function formatMRP(mrpValue) {
+            if (typeof mrpValue === 'number') {
+                return mrpValue.toFixed(2);
+            } else if (!isNaN(parseFloat(mrpValue))) {
+                return parseFloat(mrpValue).toFixed(2);
+            } else {
+                return mrpValue || 'N/A';
+            }
         }
 
         function resetSearch() {
@@ -167,8 +164,15 @@
             searchItems();
         }
 
+        function copyToMemory(content) {
+            navigator.clipboard.writeText(content).then(() => {
+                alert(`Copied to memory: ${content}`);
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', loadData);
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
     <header>📋 PMBJP Item Master <span id="data-counter">Total Items: 0</span></header>
@@ -184,6 +188,7 @@
                     <th>Generic Name</th>
                     <th>Unit Size</th>
                     <th>MRP</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody id="results-body">

@@ -72,7 +72,7 @@
         table th, table td {
             border: 1px solid #ddd;
             padding: 8px;
-            text-align: left;
+            text-align: center;  /* Center-align all columns */
         }
 
         table th {
@@ -87,19 +87,6 @@
         .highlight {
             background-color: yellow;
         }
-
-        .checkbox-container {
-            display: flex;
-            align-items: center;
-        }
-
-        .checkbox-container label {
-            margin-left: 5px;
-        }
-
-        .checkbox-container input {
-            margin-right: 5px;
-        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
@@ -113,86 +100,36 @@
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
                 data = XLSX.utils.sheet_to_json(worksheet, { defval: '' }); // Ensures no undefined values
-
+                
                 // Log the column headers to verify if they are correct
                 console.log('Loaded data:', data); // Debugging line
                 console.log('Column headers:', Object.keys(data[0])); // Log headers of first item
 
-                // Sanitize and trim column names to ensure no extra spaces
-                data = data.map(item => {
-                    const sanitizedItem = {};
-                    Object.keys(item).forEach(key => {
-                        // Remove leading/trailing spaces from the key name
-                        const sanitizedKey = key.trim();
-                        sanitizedItem[sanitizedKey] = item[key]; // Trim all keys and assign the values
-                    });
-                    return sanitizedItem;
-                });
-
                 document.getElementById('data-counter').innerText = `Total Items: ${data.length}`;
-                searchItems();
+                displayData();
             } catch (error) {
                 console.error('Error loading data:', error);
             }
         }
 
-        function searchItems() {
-            const searchValue = document.getElementById("search-bar").value.toLowerCase().trim();
+        function displayData() {
             const resultsTable = document.getElementById("results-body");
 
-            if (searchValue.length < 3) {
-                resultsTable.innerHTML = "";
-                return;
-            }
-
-            const searchTerms = searchValue.split(" ");
-            const filteredData = data.filter(item => {
-                const genericName = (item["Generic Name"] || '').toLowerCase();
-                return searchTerms.every(term => genericName.includes(term));
-            });
-
-            resultsTable.innerHTML = filteredData.map(item => {
-                const drug = (item["Drug"] || '').trim();  // Accessing new column "Drug"
-                const mrp = formatMRP(item["MRP"]);  // Accessing new column "MRP"
+            resultsTable.innerHTML = data.map(item => {
+                const drug = item["Drug"] || 'N/A';
+                const mrp = item["MRP"] || 'N/A';
                 const unitSize = item["Unit Size"] || 'N/A';
-                const genericName = (item["Generic Name"] || '').trim();
+                const genericName = item["Generic Name"] || 'N/A';
 
                 return `
                     <tr>
                         <td>${drug}</td>
-                        <td>${highlightMatches(genericName, searchTerms)}</td>
+                        <td>${genericName}</td>
                         <td>${unitSize}</td>
                         <td>${mrp}</td>
-                        <td class="checkbox-container">
-                            <input type="checkbox" id="copy-${drug}" onclick="copyToMemory('${genericName}')">
-                            <label for="copy-${drug}">Save</label>
-                        </td>
                     </tr>
                 `;
             }).join("");
-        }
-
-        function highlightMatches(text, terms) {
-            const regex = new RegExp(`(${terms.join("|")})`, "gi");
-            return text.replace(regex, match => `<span class='highlight'>${match}</span>`);
-        }
-
-        function formatMRP(mrpValue) {
-            if (!mrpValue) return 'N/A';
-            const parsedMRP = parseFloat(mrpValue);
-            if (isNaN(parsedMRP)) return 'N/A';
-            return parsedMRP.toFixed(2);
-        }
-
-        function resetSearch() {
-            document.getElementById("search-bar").value = "";
-            searchItems();
-        }
-
-        function copyToMemory(content) {
-            navigator.clipboard.writeText(content).then(() => {
-                alert(`Copied to memory: ${content}`);
-            });
         }
 
         document.addEventListener('DOMContentLoaded', loadData);
@@ -212,7 +149,6 @@
                     <th>Generic Name</th>
                     <th>Unit Size</th>
                     <th>MRP</th>
-                    <th>Action</th>
                 </tr>
             </thead>
             <tbody id="results-body">

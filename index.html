@@ -126,23 +126,37 @@
                 return searchTerms.every(term => genericName.includes(term));
             });
 
-            resultsTable.innerHTML = filteredData.map(item => `
-                <tr>
-                    <td>${item["Drug Code"] || ''}</td>
-                    <td>${highlightMatches(item["Generic Name"] || '', searchTerms)}</td>
-                    <td>${item["Unit Size"] || ''}</td>
-                    <td>${item["MRP (in Rs.)"] || ''}</td>
-                    <td class="checkbox-container">
-                        <input type="checkbox" id="copy-${item["Drug Code"]}" onclick="copyToMemory('${item["Generic Name"] || ''}')">
-                        <label for="copy-${item["Drug Code"]}">Save</label>
-                    </td>
-                </tr>
-            `).join("");
+            resultsTable.innerHTML = filteredData.map(item => {
+                const drugCode = item["Drug Code"]?.toString().trim() || 'N/A';
+                const mrp = formatMRP(item["MRP (in Rs.)"]);
+                return `
+                    <tr>
+                        <td>${drugCode}</td>
+                        <td>${highlightMatches(item["Generic Name"] || '', searchTerms)}</td>
+                        <td>${item["Unit Size"] || ''}</td>
+                        <td>${mrp}</td>
+                        <td class="checkbox-container">
+                            <input type="checkbox" id="copy-${drugCode}" onclick="copyToMemory('${item["Generic Name"] || ''}')">
+                            <label for="copy-${drugCode}">Save</label>
+                        </td>
+                    </tr>
+                `;
+            }).join("");
         }
 
         function highlightMatches(text, terms) {
             const regex = new RegExp(`(${terms.join("|")})`, "gi");
             return text.replace(regex, match => `<span class='highlight'>${match}</span>`);
+        }
+
+        function formatMRP(mrpValue) {
+            if (typeof mrpValue === 'number') {
+                return mrpValue.toFixed(2);
+            } else if (!isNaN(parseFloat(mrpValue))) {
+                return parseFloat(mrpValue).toFixed(2);
+            } else {
+                return mrpValue || 'N/A';
+            }
         }
 
         function resetSearch() {

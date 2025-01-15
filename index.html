@@ -106,16 +106,31 @@
                 console.log('Column headers:', Object.keys(data[0])); // Log headers of first item
 
                 document.getElementById('data-counter').innerText = `Total Items: ${data.length}`;
-                displayData();
+                searchItems();
             } catch (error) {
                 console.error('Error loading data:', error);
             }
         }
 
-        function displayData() {
+        function searchItems() {
+            const searchValue = document.getElementById("search-bar").value.toLowerCase().trim();
             const resultsTable = document.getElementById("results-body");
 
-            resultsTable.innerHTML = data.map(item => {
+            // Only proceed if search value is 3 or more characters
+            if (searchValue.length < 3) {
+                resultsTable.innerHTML = "";
+                return;
+            }
+
+            const searchTerms = searchValue.split(" ");
+            const filteredData = data.filter(item => {
+                const drug = (item["Drug"] || '').toLowerCase();
+                const genericName = (item["Generic Name"] || '').toLowerCase();
+                // Check if all search terms exist in either the Drug or Generic Name columns
+                return searchTerms.every(term => drug.includes(term) || genericName.includes(term));
+            });
+
+            resultsTable.innerHTML = filteredData.map(item => {
                 const drug = item["Drug"] || 'N/A';
                 const mrp = item["MRP"] || 'N/A';
                 const unitSize = item["Unit Size"] || 'N/A';
@@ -130,6 +145,11 @@
                     </tr>
                 `;
             }).join("");
+        }
+
+        function resetSearch() {
+            document.getElementById("search-bar").value = "";
+            searchItems();
         }
 
         document.addEventListener('DOMContentLoaded', loadData);

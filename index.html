@@ -112,19 +112,16 @@
                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
-                data = XLSX.utils.sheet_to_json(worksheet, { defval: '' }); // Ensures no undefined values
+                data = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
 
-                // Log the column headers to verify if they are correct
-                console.log('Loaded data:', data); // Debugging line
-                console.log('Column headers:', Object.keys(data[0])); // Log headers of first item
+                console.log('Loaded data:', data);
+                console.log('Column headers:', Object.keys(data[0]));
 
-                // Sanitize and trim column names to ensure no extra spaces
                 data = data.map(item => {
                     const sanitizedItem = {};
                     Object.keys(item).forEach(key => {
-                        // Remove leading/trailing spaces from the key name
                         const sanitizedKey = key.trim();
-                        sanitizedItem[sanitizedKey] = item[key]; // Trim all keys and assign the values
+                        sanitizedItem[sanitizedKey] = item[key];
                     });
                     return sanitizedItem;
                 });
@@ -152,7 +149,7 @@
             });
 
             resultsTable.innerHTML = filteredData.map(item => {
-                const drugCode = (item["Drug Code"] || '').trim();  // Ensuring trimming of Drug Code
+                const drugCode = (item["Drug Code"] || '').trim();
                 const mrp = formatMRP(item["MRP (in Rs.)"]);
                 const unitSize = item["Unit Size"] || 'N/A';
                 const genericName = (item["Generic Name"] || '').trim();

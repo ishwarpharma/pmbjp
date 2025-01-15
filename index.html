@@ -113,7 +113,20 @@
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
                 data = XLSX.utils.sheet_to_json(worksheet, { defval: '' }); // Ensures no undefined values
+
+                // Log the column headers to verify if they are correct
                 console.log('Loaded data:', data); // Debugging line
+                console.log('Column headers:', Object.keys(data[0])); // Log headers of first item
+
+                // Trim and sanitize column names
+                data = data.map(item => {
+                    const sanitizedItem = {};
+                    Object.keys(item).forEach(key => {
+                        sanitizedItem[key.trim()] = item[key]; // Trim all keys
+                    });
+                    return sanitizedItem;
+                });
+
                 document.getElementById('data-counter').innerText = `Total Items: ${data.length}`;
                 searchItems();
             } catch (error) {
@@ -137,6 +150,7 @@
             });
 
             resultsTable.innerHTML = filteredData.map(item => {
+                // Sanitize and access the columns after trimming the keys
                 const drugCode = (item["Drug Code"] || '').trim();
                 const mrp = formatMRP(item["MRP (in Rs.)"]);
                 const unitSize = item["Unit Size"] || 'N/A';

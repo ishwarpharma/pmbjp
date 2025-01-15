@@ -96,20 +96,21 @@
     <script>
         let data = [];
 
-        async function loadData() {
-            try {
-                const response = await fetch('pmbjp.xlsx');
-                const arrayBuffer = await response.arrayBuffer();
-                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                data = XLSX.utils.sheet_to_json(worksheet, { defval: '' }); // Ensures no undefined values
-                document.getElementById('data-counter').innerText = `Total Items: ${data.length}`;
-                searchItems();
-            } catch (error) {
-                console.error('Error loading data:', error);
-            }
-        }
+async function loadData() {
+    try {
+        const response = await fetch('pmbjp.xlsx');
+        const arrayBuffer = await response.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        data = XLSX.utils.sheet_to_json(worksheet, { defval: '' }); // Ensures no undefined values
+        console.log('Loaded data:', data); // Debugging line
+        document.getElementById('data-counter').innerText = `Total Items: ${data.length}`;
+        searchItems();
+    } catch (error) {
+        console.error('Error loading data:', error);
+    }
+}
 
         function searchItems() {
             const searchValue = document.getElementById("search-bar").value.toLowerCase().trim();

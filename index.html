@@ -94,15 +94,17 @@
 
         async function loadData() {
             try {
-                const response = await fetch('pmbjp.xlsx');
+                // Replace with your actual path to the file
+                const response = await fetch('pmbjp.xlsx'); // This file must be accessible
                 const arrayBuffer = await response.arrayBuffer();
                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
-                data = XLSX.utils.sheet_to_json(worksheet, { defval: '' }); // Ensures no undefined values
-                
+                data = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+                console.log('Loaded Data:', data); // Debugging: Check if data is loaded correctly
                 document.getElementById('data-counter').innerText = `Total Items: ${data.length}`;
-                searchItems();
+                searchItems(); // Initial search to display all records
             } catch (error) {
                 console.error('Error loading data:', error);
             }
@@ -118,13 +120,20 @@
                 return;
             }
 
+            console.log('Search Term:', searchValue); // Debugging: Log the search term
+
             const searchTerms = searchValue.split(" ");
             const filteredData = data.filter(item => {
                 const drug = (item["Drug"] || '').toLowerCase();
                 const genericName = (item["Generic Name"] || '').toLowerCase();
+                
                 // Check if all search terms exist in either the Drug or Generic Name columns
-                return searchTerms.every(term => drug.includes(term) || genericName.includes(term));
+                return searchTerms.every(term => 
+                    drug.includes(term) || genericName.includes(term)
+                );
             });
+
+            console.log('Filtered Data:', filteredData); // Debugging: Check filtered data
 
             resultsTable.innerHTML = filteredData.map(item => {
                 const drug = item["Drug"] || 'N/A';

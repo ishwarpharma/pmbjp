@@ -72,7 +72,7 @@
         table th, table td {
             border: 1px solid #ddd;
             padding: 8px;
-            text-align: center;  /* Center-align all columns */
+            text-align: center;
         }
 
         table th {
@@ -101,10 +101,6 @@
                 const worksheet = workbook.Sheets[firstSheetName];
                 data = XLSX.utils.sheet_to_json(worksheet, { defval: '' }); // Ensures no undefined values
                 
-                // Log the column headers to verify if they are correct
-                console.log('Loaded data:', data); // Debugging line
-                console.log('Column headers:', Object.keys(data[0])); // Log headers of first item
-
                 document.getElementById('data-counter').innerText = `Total Items: ${data.length}`;
                 searchItems();
             } catch (error) {
@@ -138,13 +134,23 @@
 
                 return `
                     <tr>
-                        <td>${drug}</td>
-                        <td>${genericName}</td>
+                        <td>${highlightMatches(drug, searchTerms)}</td>
+                        <td>${highlightMatches(genericName, searchTerms)}</td>
                         <td>${unitSize}</td>
                         <td>${mrp}</td>
                     </tr>
                 `;
             }).join("");
+        }
+
+        function highlightMatches(text, terms) {
+            if (!text) return text;
+            let highlightedText = text;
+            terms.forEach(term => {
+                const regex = new RegExp(`(${term})`, "gi");
+                highlightedText = highlightedText.replace(regex, "<span class='highlight'>$1</span>");
+            });
+            return highlightedText;
         }
 
         function resetSearch() {
